@@ -6,14 +6,14 @@ public class ProjectileEnemy : BaseEnemy
 {
     public GameObject projectilePrefab;
 
-    public override void AttackPlayer(/*Player player*/)
+    public override void AttackPlayer(Player player)
     {
         // Shoot projectile towards player
-      /*  if (Vector3.Distance(transform.position, player.transform.position) < detectionRange)
+        if (Vector3.Distance(transform.position, player.transform.position) < detectionRange)
         {
             GameObject projectile = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
             // Logic to make the projectile move towards player
-        }*/
+        }
     }
 }
 

@@ -14,7 +14,7 @@ public class BaseEnemy : MonoBehaviour
         // Code to detect player within a certain range
     }
 
-    public virtual void AttackPlayer(/*Player player*/)
+    public virtual void AttackPlayer(Player player)
     {
         // Basic attack logic
     }
