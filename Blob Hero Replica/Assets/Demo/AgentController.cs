@@ -1,6 +1,8 @@
 using UnityEngine;
 
-public class AgentController : MonoBehaviour
+namespace BlobHero
+{
+    public class AgentController : MonoBehaviour
 {
     public FlowFieldController flowFieldController; // Reference to FlowFieldController
     public float moveSpeed = 5f;
@@ -40,4 +42,5 @@ public class AgentController : MonoBehaviour
         targetPosition = target;
         hasReachedTarget = false; // Reset the target reach status
     }
+}
 }

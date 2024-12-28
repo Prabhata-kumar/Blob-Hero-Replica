@@ -1,101 +1,103 @@
 using UnityEngine;
 
-public class FlowFieldController : MonoBehaviour
+namespace BlobHero
 {
-    public int gridSizeX = 10;
-    public int gridSizeY = 10;
-    public float cellSize = 1f;
-    public Vector3 gridOrigin = Vector3.zero;
-    private Vector2[,] flowField;
-
-    // Target point for agents to follow
-    private Vector3 targetPoint;
-
-    void Start()
+    public class FlowFieldController : MonoBehaviour
     {
-        InitializeFlowField();
-    }
+        public int gridSizeX = 10;
+        public int gridSizeY = 10;
+        public float cellSize = 1f;
+        public Vector2 gridOrigin = Vector2.zero; // Origin for the flow field grid
+        private Vector2[,] flowField;
 
-    private void InitializeFlowField()
-    {
-        // Initialize the flow field array with the correct size and default values
-        flowField = new Vector2[gridSizeX, gridSizeY];
-        for (int x = 0; x < gridSizeX; x++)
-        {
-            for (int y = 0; y < gridSizeY; y++)
-            {
-                flowField[x, y] = Vector2.zero;
-            }
-        }
-    }
+        [SerializeField] private bool isGizmosRequried;
 
-    void OnDrawGizmos()
-    {
-        // Avoid null or incorrect grid size
-        if (flowField == null || flowField.GetLength(0) != gridSizeX || flowField.GetLength(1) != gridSizeY)
+        // Reference to the player
+        [SerializeField] private Transform player;
+
+        void Start()
         {
             InitializeFlowField();
         }
 
-        // Draw each cell and its flow direction if the flowField is initialized
-        Gizmos.color = Color.yellow;
-        for (int x = 0; x < gridSizeX; x++)
+        private void InitializeFlowField()
         {
-            for (int y = 0; y < gridSizeY; y++)
+            // Initialize the flow field array with the correct size and default values
+            flowField = new Vector2[gridSizeX, gridSizeY];
+            for (int x = 0; x < gridSizeX; x++)
             {
-                // Compute the world position of the cell center based on grid origin
-                Vector3 cellCenter = gridOrigin + new Vector3(x * cellSize + cellSize / 2, 0, y * cellSize + cellSize / 2);
-
-                // Draw the cell border
-                Gizmos.DrawWireCube(cellCenter, new Vector3(cellSize, 0.1f, cellSize));
-
-                // Draw flow direction vector
-                Vector3 flowDirection = new Vector3(flowField[x, y].x, 0, flowField[x, y].y);
-                Gizmos.color = Color.green;
-                Gizmos.DrawLine(cellCenter, cellCenter + flowDirection * cellSize);
+                for (int y = 0; y < gridSizeY; y++)
+                {
+                    flowField[x, y] = Vector2.zero;
+                }
             }
         }
-    }
 
-    void Update()
-    {
-        // Check for mouse click to set a target point
-        if (Input.GetMouseButtonDown(0))
+        void OnDrawGizmos()
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit))
+            if (!isGizmosRequried) return;
+
+            // Avoid null or incorrect grid size
+            if (flowField == null || flowField.GetLength(0) != gridSizeX || flowField.GetLength(1) != gridSizeY)
             {
-                // Update target and recalculate the flow field
-                targetPoint = hit.point;
-                CalculateFlowField(targetPoint);
+                InitializeFlowField();
+            }
+
+            // Draw each cell and its flow direction if the flowField is initialized
+            Gizmos.color = Color.yellow;
+            for (int x = 0; x < gridSizeX; x++)
+            {
+                for (int y = 0; y < gridSizeY; y++)
+                {
+                    // Compute the world position of the cell center based on grid origin
+                    Vector2 cellCenter = gridOrigin + new Vector2(x * cellSize + cellSize / 2, y * cellSize + cellSize / 2);
+
+                    // Draw the cell border
+                    Gizmos.DrawWireCube((Vector3)cellCenter, new Vector3(cellSize, cellSize, 0));
+
+                    // Draw flow direction vector
+                    Vector2 flowDirection = flowField[x, y];
+                    Gizmos.color = Color.green;
+                    Gizmos.DrawLine((Vector3)cellCenter, (Vector3)(cellCenter + flowDirection * cellSize));
+                }
             }
         }
-    }
 
-    private void CalculateFlowField(Vector3 target)
-    {
-        for (int x = 0; x < gridSizeX; x++)
+        void Update()
         {
-            for (int y = 0; y < gridSizeY; y++)
+            // If the player is assigned, update the target point to the player's position
+            if (player != null)
             {
-                Vector3 cellCenter = gridOrigin + new Vector3(x * cellSize + cellSize / 2, 0, y * cellSize + cellSize / 2);
-                Vector3 direction = (target - cellCenter).normalized;
-                flowField[x, y] = new Vector2(direction.x, direction.z);
+                Vector2 playerPosition = new Vector2(player.position.x, player.position.y);
+                CalculateFlowField(playerPosition);
             }
         }
-    }
 
-    public Vector2 GetFlowDirection(Vector3 position)
-    {
-        // Convert world position to grid coordinates relative to gridOrigin
-        int x = Mathf.FloorToInt((position.x - gridOrigin.x) / cellSize);
-        int y = Mathf.FloorToInt((position.z - gridOrigin.z) / cellSize);
-
-        // Ensure the coordinates are within the grid bounds
-        if (x >= 0 && x < gridSizeX && y >= 0 && y < gridSizeY)
+        private void CalculateFlowField(Vector2 target)
         {
-            return flowField[x, y];
+            for (int x = 0; x < gridSizeX; x++)
+            {
+                for (int y = 0; y < gridSizeY; y++)
+                {
+                    Vector2 cellCenter = gridOrigin + new Vector2(x * cellSize + cellSize / 2, y * cellSize + cellSize / 2);
+                    Vector2 direction = (target - cellCenter).normalized;
+                    flowField[x, y] = direction;
+                }
+            }
         }
-        return Vector2.zero; // Return zero if position is out of bounds
+
+        public Vector2 GetFlowDirection(Vector2 position)
+        {
+            // Convert world position to grid coordinates relative to gridOrigin
+            int x = Mathf.FloorToInt((position.x - gridOrigin.x) / cellSize);
+            int y = Mathf.FloorToInt((position.y - gridOrigin.y) / cellSize);
+
+            // Ensure the coordinates are within the grid bounds
+            if (x >= 0 && x < gridSizeX && y >= 0 && y < gridSizeY)
+            {
+                return flowField[x, y];
+            }
+            return Vector2.zero; // Return zero if position is out of bounds
+        }
     }
 }
